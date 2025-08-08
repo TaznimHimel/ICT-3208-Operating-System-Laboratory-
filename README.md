@@ -51,26 +51,39 @@ Each implementation includes:
    chmod +x script.sh
    ./script.sh
 
-###📖 Learning Goals
+##📖 Learning Goals
 Understand the working principles of different CPU scheduling algorithms.
+
 Practice implementing scheduling logic in C.
+
 Gain hands-on experience with basic Linux operations and shell commands.
+
 Learn process control and time management in operating systems.
 
-###🛠 Requirements
+
+##🛠 Requirements
 GCC compiler (for C programs)
+
 Bash shell (for Linux commands and scripts)
+
 A Linux environment (or WSL on Windows)
 
 
-###📜 License
+
+##📜 License
 This repository is shared for educational purposes only.
+
 You are free to use and modify the code, but please give credit when redistributing.
 
 
-###✏️ Author
+
+##✏️ Author
 Himel
+
 Student, Department of ICT
+
 Session: 2020-21
+
 Islamic University, Bangladesh
+
 Course: ICT-3208 — (Operating System Laboratory)

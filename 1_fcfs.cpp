@@ -1,150 +1,138 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-struct Process
+// A structure to hold process details
+typedef struct
 {
-    int id;
-    int arrival_time;
-    int burst_time;
-    int completion_time;
-    int turnaround_time;
-    int waiting_time;
-};
+    int pid;             // Process ID
+    int arrival_time;    // Arrival Time
+    int burst_time;      // Burst Time
+    int completion_time; // Completion Time
+    int turnaround_time; // Turnaround Time
+    int waiting_time;    // Waiting Time
+} Process;
 
-void find_times_fcfs(struct Process proc[], int n)
+/**
+ * @brief Sorts processes based on arrival time using Bubble Sort.
+ * @param p Array of processes.
+ * @param n Number of processes.
+ */
+void sortByArrival(Process p[], int n)
 {
-    int time = 0;
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n - 1; i++)
     {
-        if (time < proc[i].arrival_time)
+        for (int j = 0; j < n - i - 1; j++)
         {
-            // CPU idle until this process arrives
-            time = proc[i].arrival_time;
+            if (p[j].arrival_time > p[j + 1].arrival_time)
+            {
+                Process temp = p[j];
+                p[j] = p[j + 1];
+                p[j + 1] = temp;
+            }
         }
-        time += proc[i].burst_time;
-        proc[i].completion_time = time;
-        proc[i].turnaround_time = proc[i].completion_time - proc[i].arrival_time;
-        proc[i].waiting_time = proc[i].turnaround_time - proc[i].burst_time;
     }
 }
 
-void print_results(struct Process proc[], int n)
+/**
+ * @brief Calculates all timing metrics for each process.
+ * @param p Array of processes.
+ * @param n Number of processes.
+ */
+void calculateMetrics(Process p[], int n)
 {
-    float total_wt = 0, total_tat = 0;
-    printf("\nP#\tAT\tBT\tCT\tTAT\tWT\n");
+    int current_time = 0;
+
+    // The first process's completion time depends on its arrival.
+    // The CPU might be idle before the first process arrives.
+    current_time = p[0].arrival_time;
+
     for (int i = 0; i < n; i++)
     {
-        total_tat += proc[i].turnaround_time;
-        total_wt += proc[i].waiting_time;
-        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",
-               proc[i].id,
-               proc[i].arrival_time,
-               proc[i].burst_time,
-               proc[i].completion_time,
-               proc[i].turnaround_time,
-               proc[i].waiting_time);
+        // If the current process arrives after the previous one has finished,
+        // the CPU will be idle. The start time is its arrival time.
+        if (p[i].arrival_time > current_time)
+        {
+            current_time = p[i].arrival_time;
+        }
+
+        // Calculate metrics for the current process
+        p[i].completion_time = current_time + p[i].burst_time;
+        p[i].turnaround_time = p[i].completion_time - p[i].arrival_time;
+        p[i].waiting_time = p[i].turnaround_time - p[i].burst_time;
+
+        // The next process can only start after the current one completes
+        current_time = p[i].completion_time;
     }
-    printf("Average Turnaround Time: %.2f\n", total_tat / n);
-    printf("Average Waiting Time: %.2f\n", total_wt / n);
 }
 
-void print_gantt_chart(struct Process proc[], int n)
+/**
+ * @brief Prints the final results table and average metrics.
+ * @param p Array of processes.
+ * @param n Number of processes.
+ */
+void printResults(Process p[], int n)
 {
-    printf("\nGantt Chart:\n");
+    float total_turnaround_time = 0;
+    float total_waiting_time = 0;
 
-    // Top bar
-    printf(" ");
+    printf("\n--- FCFS Scheduling Results ---\n\n");
+    printf("PID\tArrival\tBurst\tCompletion\tTurnaround\tWaiting\n");
+    printf("---\t-------\t-----\t----------\t----------\t-------\n");
+
     for (int i = 0; i < n; i++)
     {
-        int segment = proc[i].burst_time;
-        if (i > 0 && proc[i].arrival_time > proc[i - 1].completion_time)
-        {
-            segment += proc[i].arrival_time - proc[i - 1].completion_time; // idle time
-        }
-        for (int j = 0; j < segment; j++)
-            printf("—");
-        printf(" ");
-    }
-    printf("\n|");
+        printf("%d\t%d\t%d\t%d\t\t%d\t\t%d\n",
+               p[i].pid,
+               p[i].arrival_time,
+               p[i].burst_time,
+               p[i].completion_time,
+               p[i].turnaround_time,
+               p[i].waiting_time);
 
-    // Process/Idle IDs
-    int time = 0;
-    for (int i = 0; i < n; i++)
-    {
-        if (time < proc[i].arrival_time)
-        {
-            printf(" Idle |");
-            time = proc[i].arrival_time;
-        }
-        printf(" P%d |", proc[i].id);
-        time += proc[i].burst_time;
+        total_turnaround_time += p[i].turnaround_time;
+        total_waiting_time += p[i].waiting_time;
     }
 
-    printf("\n ");
-    for (int i = 0; i < n; i++)
-    {
-        int segment = proc[i].burst_time;
-        if (i > 0 && proc[i].arrival_time > proc[i - 1].completion_time)
-        {
-            segment += proc[i].arrival_time - proc[i - 1].completion_time;
-        }
-        for (int j = 0; j < segment; j++)
-            printf("—");
-        printf(" ");
-    }
-
-    printf("\n");
-
-    // Timeline
-    time = 0;
-    printf("%d", time);
-    for (int i = 0; i < n; i++)
-    {
-        if (time < proc[i].arrival_time)
-        {
-            time = proc[i].arrival_time;
-            printf("%*d", 6, time); // idle gap
-        }
-        time += proc[i].burst_time;
-        printf("%*d", 6, time);
-    }
-    printf("\n");
+    printf("\n--------------------------------------------------------\n");
+    printf("Average Turnaround Time: %.2f ms\n", total_turnaround_time / n);
+    printf("Average Waiting Time:    %.2f ms\n", total_waiting_time / n);
+    printf("--------------------------------------------------------\n");
 }
 
 int main()
 {
     int n;
-    printf("Enter number of processes: ");
+    printf("Enter the number of processes: ");
     scanf("%d", &n);
 
-    struct Process proc[n];
+    if (n <= 0)
+    {
+        printf("Number of processes must be positive.\n");
+        return 1;
+    }
 
-    printf("Enter Arrival Time and Burst Time for each process:\n");
+    // Array of Process structures
+    Process processes[n];
+
+    // Get user input for each process
     for (int i = 0; i < n; i++)
     {
-        proc[i].id = i + 1;
-        printf("P%d Arrival Time: ", proc[i].id);
-        scanf("%d", &proc[i].arrival_time);
-        printf("P%d Burst Time: ", proc[i].id);
-        scanf("%d", &proc[i].burst_time);
+        processes[i].pid = i + 1;
+        printf("\nEnter details for Process %d:\n", processes[i].pid);
+        printf("  Arrival Time: ");
+        scanf("%d", &processes[i].arrival_time);
+        printf("  Burst Time: ");
+        scanf("%d", &processes[i].burst_time);
     }
 
-    // Sort by Arrival Time (FCFS requirement)
-    for (int i = 0; i < n - 1; i++)
-    {
-        for (int j = 0; j < n - i - 1; j++)
-        {
-            if (proc[j].arrival_time > proc[j + 1].arrival_time)
-            {
-                struct Process temp = proc[j];
-                proc[j] = proc[j + 1];
-                proc[j + 1] = temp;
-            }
-        }
-    }
+    // 1. Sort processes by arrival time
+    sortByArrival(processes, n);
 
-    find_times_fcfs(proc, n);
-    print_results(proc, n);
-    print_gantt_chart(proc, n);
+    // 2. Calculate completion, turnaround, and waiting times
+    calculateMetrics(processes, n);
+
+    // 3. Print the final results
+    printResults(processes, n);
 
     return 0;
 }

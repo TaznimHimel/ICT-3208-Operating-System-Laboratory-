@@ -1,129 +1,116 @@
 #include <stdio.h>
-
 #define MAX 100
-
-struct Process {
-    int id;
-    int arrival_time;
-    int burst_time;
-    int remaining_time;
-    int completion_time;
-    int waiting_time;
-    int turnaround_time;
-};
-
-int main() {
-    struct Process p[MAX];
-    int n, time_quantum;
-    int total_wt = 0, total_tat = 0;
-    int completed = 0, current_time = 0;
-    int queue[MAX], front = 0, rear = 0, visited[MAX] = {0};
-    int gantt[MAX * 100], gantt_time[MAX * 100], gantt_index = 0; 
+int main()
+{
+    int n, tq;
+    int pid[MAX], at[MAX], bt[MAX], rem_bt[MAX], ct[MAX], tat[MAX], wt[MAX];
+    int queue[MAX], front = 0, rear = 0;
+    int time = 0, completed = 0;
+    int visited[MAX] = {0};
 
     printf("Enter number of processes: ");
     scanf("%d", &n);
 
-    for (int i = 0; i < n; i++) {
-        p[i].id = i + 1;
-        printf("\nProcess %d\n", i + 1);
-        printf("Arrival Time: ");
-        scanf("%d", &p[i].arrival_time);
-        printf("Burst Time: ");
-        scanf("%d", &p[i].burst_time);
-        p[i].remaining_time = p[i].burst_time;
+    for (int i = 0; i < n; i++)
+    {
+        pid[i] = i + 1;
+        printf("Enter Arrival Time & Burst Time  of P%d: ", pid[i]);
+        scanf("%d %d", &at[i], &bt[i]);
+        rem_bt[i] = bt[i];
     }
 
-    printf("\nEnter Time Quantum: ");
-    scanf("%d", &time_quantum);
+    printf("Enter Time Quantum: ");
+    scanf("%d", &tq);
 
-    // Sort by arrival time (important for RR with arrival times)
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = i + 1; j < n; j++) {
-            if (p[i].arrival_time > p[j].arrival_time) {
-                struct Process temp = p[i];
-                p[i] = p[j];
-                p[j] = temp;
-            }
+    // Push first process if it arrives at time 0
+    for (int i = 0; i < n; i++)
+    {
+        if (at[i] == 0)
+        {
+            queue[rear++] = i;
+            visited[i] = 1;
         }
     }
 
-    // Initialize queue with first process
-    queue[rear++] = 0;
-    visited[0] = 1;
-    current_time = p[0].arrival_time;
+    while (completed < n)
+    {
+        if (front == rear)
+        { // No process ready → CPU idle
+            time++;
+            for (int i = 0; i < n; i++)
+            {
+                if (!visited[i] && at[i] <= time)
+                {
+                    queue[rear++] = i;
+                    visited[i] = 1;
+                }
+            }
+            continue;
+        }
 
-    while (completed < n) {
-        int idx = queue[front++];
-        
-        // Gantt Chart logging
-        gantt[gantt_index] = p[idx].id;
-        gantt_time[gantt_index++] = current_time;
+        int i = queue[front++]; // Dequeue process
 
-        if (p[idx].remaining_time <= time_quantum) {
-            current_time += p[idx].remaining_time;
-            p[idx].remaining_time = 0;
-            p[idx].completion_time = current_time;
+        if (rem_bt[i] > tq)
+        {
+            time += tq;
+            rem_bt[i] -= tq;
+        }
+        else
+        {
+            time += rem_bt[i];
+            rem_bt[i] = 0;
             completed++;
-        } else {
-            current_time += time_quantum;
-            p[idx].remaining_time -= time_quantum;
+            ct[i] = time;
         }
 
         // Add newly arrived processes to queue
-        for (int i = 0; i < n; i++) {
-            if (!visited[i] && p[i].arrival_time <= current_time && p[i].remaining_time > 0) {
-                queue[rear++] = i;
-                visited[i] = 1;
+        for (int j = 0; j < n; j++)
+        {
+            if (!visited[j] && at[j] <= time)
+            {
+                queue[rear++] = j;
+                visited[j] = 1;
             }
         }
 
-        // If current process still has time left, put it back in queue
-        if (p[idx].remaining_time > 0) {
-            queue[rear++] = idx;
-        }
-
-        // If queue is empty, jump to next arrival
-        if (front == rear) {
-            for (int i = 0; i < n; i++) {
-                if (p[i].remaining_time > 0) {
-                    queue[rear++] = i;
-                    visited[i] = 1;
-                    current_time = p[i].arrival_time;
-                    break;
-                }
-            }
+        // If current process still needs time, push back into queue
+        if (rem_bt[i] > 0)
+        {
+            queue[rear++] = i;
         }
     }
 
-    // Calculate WT and TAT
-    for (int i = 0; i < n; i++) {
-        p[i].turnaround_time = p[i].completion_time - p[i].arrival_time;
-        p[i].waiting_time = p[i].turnaround_time - p[i].burst_time;
-        total_wt += p[i].waiting_time;
-        total_tat += p[i].turnaround_time;
+    // Calculate TAT & WT
+    float sum_tat = 0, sum_wt = 0;
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for (int i = 0; i < n; i++)
+    {
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];
+        sum_tat += tat[i];
+        sum_wt += wt[i];
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n", pid[i], at[i], bt[i], ct[i], tat[i], wt[i]);
     }
 
-    // Output Table
-    printf("\nProcess\tAT\tBT\tCT\tTAT\tWT\n");
-    for (int i = 0; i < n; i++) {
-        printf("P%d\t%d\t%d\t%d\t%d\t%d\n",
-               p[i].id, p[i].arrival_time, p[i].burst_time,
-               p[i].completion_time, p[i].turnaround_time, p[i].waiting_time);
-    }
-
-    printf("\nAverage Waiting Time: %.2f", (float)total_wt / n);
-    printf("\nAverage Turnaround Time: %.2f\n", (float)total_tat / n);
-
-    // Gantt Chart Display
-    printf("\nGantt Chart:\n");
-    for (int i = 0; i < gantt_index; i++) {
-        printf("| P%d ", gantt[i]);
-    }
-    printf("|\n");
-    for (int i = 0; i < gantt_index; i++) {
-        printf("%d    ", gantt_time[i]);
-    }
-    printf("%d\n", current_time);
+    printf("\nAverage TAT = %.2f", sum_tat / n);
+    printf("\nAverage WT  = %.2f\n", sum_wt / n);
 
     return 0;
 }
+
+/*
+Output:
+Enter number of processes: 3
+Enter Arrival Time & Burst Time  of P1: 1 2
+Enter Arrival Time & Burst Time  of P2: 3 4
+Enter Arrival Time & Burst Time  of P3: 5 6
+Enter Time Quantum: 1
+
+PID     AT      BT      CT      TAT     WT
+P1      1       2       3       2       0
+P2      3       4       9       6       2
+P3      5       6       13      8       2
+
+Average TAT = 5.33
+Average WT  = 1.33
+*/

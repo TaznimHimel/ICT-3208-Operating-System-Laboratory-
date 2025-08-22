@@ -80,19 +80,20 @@ int main()
 
     return 0;
 }
-
-/*
-Output:
-Enter number of processes: 3
-Enter Arrival Times & Burst Times of process p1 :1 2
-Enter Arrival Times & Burst Times of process p2 :2 3
-Enter Arrival Times & Burst Times of process p3 :4 5
+/*Output:
+Enter number of processes: 4
+Enter Arrival Times & Burst Times of process p1 :0 7
+Enter Arrival Times & Burst Times of process p2 :3 3
+Enter Arrival Times & Burst Times of process p3 :5 5
+Enter Arrival Times & Burst Times of process p4 :6 2
 
 PID     AT      BT      CT      TAT     WT
-P1      1       2       3       2       0
-P2      2       3       6       4       1
-P3      4       5       11      7       2
+P1      0       7       12      12      5
+P2      3       3       6       3       0
+P3      5       5       17      12      7
+P4      6       2       8       2       0
 
-Average Turnaround Time: 4.33
-Average Waiting Time: 1.00
+Average Turnaround Time: 7.25
+Average Waiting Time: 3.00
+--- IGNORE ---
 */

@@ -1,138 +1,107 @@
 #include <stdio.h>
-#include <stdlib.h>
-
-// A structure to hold process details
-typedef struct
-{
-    int pid;             // Process ID
-    int arrival_time;    // Arrival Time
-    int burst_time;      // Burst Time
-    int completion_time; // Completion Time
-    int turnaround_time; // Turnaround Time
-    int waiting_time;    // Waiting Time
-} Process;
-
-/**
- * @brief Sorts processes based on arrival time using Bubble Sort.
- * @param p Array of processes.
- * @param n Number of processes.
- */
-void sortByArrival(Process p[], int n)
-{
-    for (int i = 0; i < n - 1; i++)
-    {
-        for (int j = 0; j < n - i - 1; j++)
-        {
-            if (p[j].arrival_time > p[j + 1].arrival_time)
-            {
-                Process temp = p[j];
-                p[j] = p[j + 1];
-                p[j + 1] = temp;
-            }
-        }
-    }
-}
-
-/**
- * @brief Calculates all timing metrics for each process.
- * @param p Array of processes.
- * @param n Number of processes.
- */
-void calculateMetrics(Process p[], int n)
-{
-    int current_time = 0;
-
-    // The first process's completion time depends on its arrival.
-    // The CPU might be idle before the first process arrives.
-    current_time = p[0].arrival_time;
-
-    for (int i = 0; i < n; i++)
-    {
-        // If the current process arrives after the previous one has finished,
-        // the CPU will be idle. The start time is its arrival time.
-        if (p[i].arrival_time > current_time)
-        {
-            current_time = p[i].arrival_time;
-        }
-
-        // Calculate metrics for the current process
-        p[i].completion_time = current_time + p[i].burst_time;
-        p[i].turnaround_time = p[i].completion_time - p[i].arrival_time;
-        p[i].waiting_time = p[i].turnaround_time - p[i].burst_time;
-
-        // The next process can only start after the current one completes
-        current_time = p[i].completion_time;
-    }
-}
-
-/**
- * @brief Prints the final results table and average metrics.
- * @param p Array of processes.
- * @param n Number of processes.
- */
-void printResults(Process p[], int n)
-{
-    float total_turnaround_time = 0;
-    float total_waiting_time = 0;
-
-    printf("\n--- FCFS Scheduling Results ---\n\n");
-    printf("PID\tArrival\tBurst\tCompletion\tTurnaround\tWaiting\n");
-    printf("---\t-------\t-----\t----------\t----------\t-------\n");
-
-    for (int i = 0; i < n; i++)
-    {
-        printf("%d\t%d\t%d\t%d\t\t%d\t\t%d\n",
-               p[i].pid,
-               p[i].arrival_time,
-               p[i].burst_time,
-               p[i].completion_time,
-               p[i].turnaround_time,
-               p[i].waiting_time);
-
-        total_turnaround_time += p[i].turnaround_time;
-        total_waiting_time += p[i].waiting_time;
-    }
-
-    printf("\n--------------------------------------------------------\n");
-    printf("Average Turnaround Time: %.2f ms\n", total_turnaround_time / n);
-    printf("Average Waiting Time:    %.2f ms\n", total_waiting_time / n);
-    printf("--------------------------------------------------------\n");
-}
 
 int main()
 {
-    int n;
-    printf("Enter the number of processes: ");
+    int n, i, j, time = 0;
+    int pid[10], at[10], bt[10];
+    int ct[10], tat[10], wt[10];
+    float avg_tat = 0, avg_wt = 0;
+
+    printf("Enter number of processes: ");
     scanf("%d", &n);
 
-    if (n <= 0)
+    // Input PID, AT, BT
+    for (i = 0; i < n; i++)
     {
-        printf("Number of processes must be positive.\n");
-        return 1;
+        pid[i] = i + 1;
+        printf("Enter Arrival and Burst Time for P%d: ", pid[i]);
+        scanf("%d %d", &at[i], &bt[i]);
     }
 
-    // Array of Process structures
-    Process processes[n];
-
-    // Get user input for each process
-    for (int i = 0; i < n; i++)
+    // Copy original arrays to sort based on arrival time
+    int orig_pid[10], orig_at[10], orig_bt[10];
+    for (i = 0; i < n; i++)
     {
-        processes[i].pid = i + 1;
-        printf("\nEnter details for Process %d:\n", processes[i].pid);
-        printf("  Arrival Time: ");
-        scanf("%d", &processes[i].arrival_time);
-        printf("  Burst Time: ");
-        scanf("%d", &processes[i].burst_time);
+        orig_pid[i] = pid[i];
+        orig_at[i] = at[i];
+        orig_bt[i] = bt[i];
     }
 
-    // 1. Sort processes by arrival time
-    sortByArrival(processes, n);
+    // Sort by Arrival Time
+    for (i = 0; i < n - 1; i++)
+    {
+        for (j = i + 1; j < n; j++)
+        {
+            if (at[i] > at[j])
+            {
+                int temp;
+                temp = at[i];
+                at[i] = at[j];
+                at[j] = temp;
+                temp = bt[i];
+                bt[i] = bt[j];
+                bt[j] = temp;
+                temp = pid[i];
+                pid[i] = pid[j];
+                pid[j] = temp;
+            }
+        }
+    }
 
-    // 2. Calculate completion, turnaround, and waiting times
-    calculateMetrics(processes, n);
+    // Calculate Completion, Turnaround, Waiting Time on orig arrays
+    time = 0;
+    for (i = 0; i < n; i++)
+    {
+        if (time < at[i])
+        {
+            time = at[i];
+        }
+        ct[i] = time + bt[i];
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];
+        time = ct[i];
+    }
+    int orig_ct[10], orig_tat[10], orig_wt[10];
+    // Map back the results to original PID order
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < n; j++)
+        {
+            if (orig_pid[i] == pid[j])
+            {
+                orig_ct[i] = ct[j];
+                orig_tat[i] = tat[j];
+                orig_wt[i] = wt[j];
+                avg_tat += orig_tat[i];
+                avg_wt += orig_wt[i];
+                break;
+            }
+        }
+    }
 
-    // 3. Print the final results
-    printResults(processes, n);
+    // Print output in original PID order
+    printf("\nPID\tAT\tBT\tCT\tTAT\tWT\n");
+    for (i = 0; i < n; i++)
+    {
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\n", orig_pid[i], orig_at[i], orig_bt[i], orig_ct[i], orig_tat[i], orig_wt[i]);
+    }
 
-    return 0;
+    printf("\nAverage Turnaround Time = %.2f", avg_tat / n);
+    printf("\nAverage Waiting Time = %.2f\n", avg_wt / n);
 }
+
+/*
+Output:
+Enter number of processes: 3
+Enter Arrival and Burst Time for P1: 1 2
+Enter Arrival and Burst Time for P2: 2 3
+Enter Arrival and Burst Time for P3: 4 5
+
+PID     AT      BT      CT      TAT     WT
+P1      1       2       3       2       0
+P2      2       3       6       4       1
+P3      4       5       11      7       2
+
+Average Turnaround Time = 4.33
+Average Waiting Time = 1.00
+*/

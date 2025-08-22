@@ -1,118 +1,108 @@
+// preemptive priority scheduling
 #include <stdio.h>
-#include <limits.h> // Used for INT_MAX
-
-// A simplified structure to represent a process
-typedef struct
-{
-    int pid;             // Process ID
-    int arrival_time;    // Arrival Time
-    int burst_time;      // Original Burst Time
-    int priority;        // Priority (lower number is higher priority)
-    int remaining_time;  // Remaining time to execute
-    int completion_time; // Time when the process completes
-    int turnaround_time; // Completion Time - Arrival Time
-    int waiting_time;    // Turnaround Time - Burst Time
-} Process;
-
+#define MAX 30
 int main()
 {
     int n;
-    printf("Enter the number of processes: ");
+    int at[MAX], bt[MAX], pr[MAX], remaining_bt[MAX]; // How much time remains for each process to complete (initialized to burst time).
+    int wt[MAX], tat[MAX], ct[MAX], pid[MAX];
+    int completed[MAX] = {0}; // Array to track whether each process is completed (0 = not completed, 1 = completed)
+    int time = 0;             // current CPU time
+    int count = 0;            // Number of completed process
+
+    float total_wt = 0, total_tat = 0;
+
+    printf("Enter number of processes: ");
     scanf("%d", &n);
 
-    Process proc[n]; // Array of process structures
+    // input Priorities, arrival time & burst time
 
-    // --- Input Process Details ---
-    printf("\nEnter process details (Arrival Time, Burst Time, Priority):\n");
     for (int i = 0; i < n; i++)
     {
-        printf("Process %d: ", i + 1);
-        proc[i].pid = i + 1;
-        scanf("%d %d %d", &proc[i].arrival_time, &proc[i].burst_time, &proc[i].priority);
-        proc[i].remaining_time = proc[i].burst_time; // Initially, remaining time is the full burst time
+        pid[i] = i + 1;
+        printf("Enter Priorities, Arrival Times & Burst Times of process p%d :", pid[i]);
+        scanf("%d %d %d", &pr[i], &at[i], &bt[i]);
+        remaining_bt[i] = bt[i];
     }
-
-    int current_time = 0;
-    int completed_processes = 0;
-    float total_turnaround_time = 0;
-    float total_waiting_time = 0;
-
-    printf("\n--- Preemptive Priority Scheduling Simulation ---\n");
-
-    // --- Main Simulation Loop ---
-    // The loop continues until all processes are completed.
-    while (completed_processes < n)
+    // preemptive Priority Scheduling
+    while (count < n)
     {
-        int highest_priority_index = -1;
+        int idx = -1;
+        int mn_pr = 9999; // stores the best (lowest) priority found so far, initialized to a large number.
 
-        // Find the process with the highest priority among those that have arrived and are not yet finished.
+        // Find process with highest priority (lowest number = higher priority)
         for (int i = 0; i < n; i++)
         {
-            if (proc[i].arrival_time <= current_time && proc[i].remaining_time > 0)
+            if (at[i] <= time && !completed[i])
             {
-                // A new process is chosen if:
-                // 1. It's the first one we've found in this time slice.
-                // 2. Its priority is higher (lower number) than the one we've already chosen.
-                // 3. It has the same priority, but it arrived earlier (tie-breaker).
-                if (highest_priority_index == -1 ||
-                    proc[i].priority < proc[highest_priority_index].priority ||
-                    (proc[i].priority == proc[highest_priority_index].priority && proc[i].arrival_time < proc[highest_priority_index].arrival_time))
+                if (pr[i] < mn_pr)
                 {
-                    highest_priority_index = i;
+                    mn_pr = pr[i];
+                    idx = i;
+                }
+                // If same priority, choose by arrival time
+                else if (pr[i] == mn_pr)
+                {
+                    if (at[i] < at[idx])
+                    {
+                        idx = i;
+                    }
                 }
             }
         }
 
-        // If no process is ready to run, the CPU is idle. We just advance the time.
-        if (highest_priority_index == -1)
+        if (idx != -1)
         {
-            current_time++;
-            continue;
+            remaining_bt[idx]--;
+            time++;
+
+            // calculate completion time,waiting time and turn around time
+            if (remaining_bt[idx] == 0)
+            {
+                completed[idx] = 1;
+                count++;
+                ct[idx] = time;
+                tat[idx] = ct[idx] - at[idx];
+                wt[idx] = tat[idx] - bt[idx];
+                total_wt += wt[idx];
+                total_tat += tat[idx];
+            }
         }
 
-        // Execute the selected process for one time unit.
-        proc[highest_priority_index].remaining_time--;
-
-        // Check if the process has completed its execution.
-        if (proc[highest_priority_index].remaining_time == 0)
+        else
         {
-            // Calculate performance metrics for the completed process
-            proc[highest_priority_index].completion_time = current_time + 1;
-            proc[highest_priority_index].turnaround_time = proc[highest_priority_index].completion_time - proc[highest_priority_index].arrival_time;
-            proc[highest_priority_index].waiting_time = proc[highest_priority_index].turnaround_time - proc[highest_priority_index].burst_time;
-
-            // Add to totals for final average calculation
-            total_turnaround_time += proc[highest_priority_index].turnaround_time;
-            total_waiting_time += proc[highest_priority_index].waiting_time;
-
-            completed_processes++;
+            // No process available at this time
+            time++;
         }
-
-        // Advance simulation time by one unit.
-        current_time++;
     }
 
-    // --- Output Results ---
-    printf("\n----------------------------------------------------------------------------------\n");
-    printf("PID\tArrival\tBurst\tPriority\tCompletion\tTurnaround\tWaiting\n");
-    printf("----------------------------------------------------------------------------------\n");
-
+    printf("\nPID\tAT\tBT\tPR\tCT\tTAT\tWT\n");
     for (int i = 0; i < n; i++)
     {
-        printf("%d\t%d\t%d\t%d\t\t%d\t\t%d\t\t%d\n",
-               proc[i].pid,
-               proc[i].arrival_time,
-               proc[i].burst_time,
-               proc[i].priority,
-               proc[i].completion_time,
-               proc[i].turnaround_time,
-               proc[i].waiting_time);
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\n", pid[i], at[i], bt[i], pr[i], ct[i], tat[i], wt[i]);
     }
-    printf("----------------------------------------------------------------------------------\n");
 
-    // Print the final average times
-    printf("\nAverage Turnaround Time: %.2f\n", total_turnaround_time / n);
-    printf("Average Waiting Time:    %.2f\n", total_waiting_time / n);
+    printf("\nAverage Waiting Time = %.2f\n", total_wt / n);
+    printf("Average Turnaround Time = %.2f\n", total_tat / n);
 
     return 0;
 }
+/*OUTPUT:
+Enter number of processes: 5
+Enter Priorities, Arrival Times & Burst Times of process p1 :2 0 11
+Enter Priorities, Arrival Times & Burst Times of process p2 :0 5 28
+Enter Priorities, Arrival Times & Burst Times of process p3 :3 12 2
+Enter Priorities, Arrival Times & Burst Times of process p4 :1 2 10
+Enter Priorities, Arrival Times & Burst Times of process p5 :4 9 16
+
+PID     AT      BT      PR      CT      TAT     WT
+P1      0       11      2       49      49      38
+P2      5       28      0       33      28      0
+P3      12      2       3       51      39      37
+P4      2       10      1       40      38      28
+P5      9       16      4       67      58      42
+
+Average Waiting Time = 29.00
+Average Turnaround Time = 42.40
+// Time Complexity: O(n^2) in worst case
+*/

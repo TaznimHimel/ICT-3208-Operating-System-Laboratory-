@@ -10,24 +10,24 @@ int main()
 
     int max[n][m], alloc[n][m], need[n][m], avail[m];
 
-    // Input: Max
+    // Input Max Matrix
     printf("Enter Max Matrix (%d x %d):\n", n, m);
     for (int i = 0; i < n; i++)
         for (int j = 0; j < m; j++)
             scanf("%d", &max[i][j]);
 
-    // Input: Allocation
+    // Input Allocation Matrix
     printf("Enter Allocation Matrix (%d x %d):\n", n, m);
     for (int i = 0; i < n; i++)
         for (int j = 0; j < m; j++)
             scanf("%d", &alloc[i][j]);
 
-    // Input: Available
+    // Input Available Resources
     printf("Enter Available Resources (%d):\n", m);
     for (int j = 0; j < m; j++)
         scanf("%d", &avail[j]);
 
-    // Compute Need = Max - Allocation
+    // Calculate Need Matrix
     for (int i = 0; i < n; i++)
         for (int j = 0; j < m; j++)
             need[i][j] = max[i][j] - alloc[i][j];
@@ -63,21 +63,21 @@ int main()
 
             if (canRun)
             {
-                // "Run" process i: it finishes and releases its allocation
                 for (int j = 0; j < m; j++)
-                    work[j] += alloc[i][j];
-                finish[i] = 1;
+                    work[j] += alloc[i][j]; // release resources after finish
                 safeSeq[count++] = i;
+                finish[i] = 1;
                 found = 1;
             }
         }
         if (!found)
-            break; // no process could be satisfied -> unsafe
+            break;
     }
 
     if (count == n)
     {
-        printf("\nSystem is in a SAFE state.\nSafe Sequence: ");
+        printf("\n Deadlock Prevented! System is in a SAFE state.\n");
+        printf("Safe Sequence: ");
         for (int k = 0; k < n; k++)
         {
             printf("P%d", safeSeq[k]);
@@ -85,30 +85,29 @@ int main()
                 printf(" -> ");
         }
         printf("\n");
-
-        // Optional: show a step-by-step allocation simulation
-        printf("\n--- Allocation Simulation in Safe Order ---\n");
-        int simAvail[m];
-        for (int j = 0; j < m; j++)
-            simAvail[j] = avail[j];
-
-        for (int idx = 0; idx < n; idx++)
-        {
-            int p = safeSeq[idx];
-            // grant remaining need safely (conceptual)
-            printf("Grant remaining need to P%d. It runs and finishes. ", p);
-            // release allocation
-            for (int j = 0; j < m; j++)
-                simAvail[j] += alloc[p][j];
-            printf("Available now: ");
-            for (int j = 0; j < m; j++)
-                printf("%d%s", simAvail[j], (j == m - 1) ? "\n" : " ");
-        }
     }
     else
     {
-        printf("\nSystem is UNSAFE (deadlock risk). No safe sequence exists with current state.\n");
+        printf("\n Deadlock Not Prevented! System is in an UNSAFE state.\n");
     }
-
+    
     return 0;
 }
+
+/*
+Processes: 3
+Resources: 3
+
+Max:
+3 2 2
+6 1 3
+3 1 4
+
+Allocation:
+1 0 0
+5 1 1
+2 1 1
+
+Available:
+2 1 2
+*/

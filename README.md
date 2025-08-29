@@ -1,7 +1,7 @@
 # ICT-3208 — Operating System Laboratory
 
 This repository contains lab solutions and code implementations for the **Operating System Laboratory (ICT-3208)** course.  
-It covers **all major CPU scheduling algorithms** along with **basic Linux commands and operations** for practical OS learning.
+It covers **All major CPU Scheduling Algorithms** along with **Basic Linux commands and operations** for practical OS learning.
 
 ---
 
@@ -9,13 +9,12 @@ It covers **all major CPU scheduling algorithms** along with **basic Linux comma
 
 ### 1. CPU Scheduling Algorithms
 - **First Come First Serve (FCFS)**
-- **Shortest Job First (SJF) — Preemptive & Non-Preemptive**
+- **Priority Scheduling — Preemptive & Non-Preemptive**
+- **Shortest Job First (SJF) —Non-Preemptive**
 - **Shortest Remaining Time First (SRTF)**
 - **Round Robin (RR)**
-- **Priority Scheduling — Preemptive & Non-Preemptive**
-- **Multilevel Queue Scheduling**
-- **Multilevel Feedback Queue Scheduling**
-- **Gantt Chart generation** for each algorithm
+- **Bankers Algorithm - Deadlock Avoidance**
+- **Bankers Algorithm - Deadlock Prevention**
 
 Each implementation includes:
 - Process structure definition
